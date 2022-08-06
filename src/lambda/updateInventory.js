@@ -1,29 +1,64 @@
-// const createItem = require("../dynamodb/createItem");
-// const formatParams = (body) => {
-//   let params = {};
-//   const keys = Object.keys(body);
-//   keys.forEach((key) => {
-//     params[key] = {
-//       S: body[key],
-//     };
-//   });
-//   // do something with images
-//   params = {
-//     ...params,
-//     timestamp: {
-//       S: new Date().toISOString(),
-//     },
-//   };
+const updateItem = require("../dynamodb/updateItem");
 
-//   return params;
-// };
+const formattedImages = (body) =>
+  body.images.map((image) => {
+    if (!image.alt) {
+      return {
+        M: {
+          image_url: {
+            S: image,
+          },
+          alt: {
+            S: `${body.brand.toLowerCase()}-${body.model.toLowerCase()}-${body.model_number.toLowerCase()}-dial-${body.dial.toLowerCase()}-bezel-${body.bezel.toLowerCase()}`,
+          },
+        },
+      };
+    } else {
+      return {
+        M: {
+          image_url: {
+            S: image.image_url,
+          },
+          alt: {
+            S: image.alt,
+          },
+        },
+      };
+    }
+  });
+
+const formatParams = (body) => {
+  let params = {};
+  const keys = Object.keys(body);
+  keys.forEach((key) => {
+    params[key] = {
+      S: body[key],
+    };
+  });
+
+  params = {
+    ...params,
+    timestamp: {
+      S: new Date().toISOString(),
+    },
+    colorway: {
+      S: `${body.model_number.toLowerCase()}-${body.dial.toLowerCase()}-${body.bezel.toLowerCase()}`,
+    },
+  };
+
+  if (params.images) {
+    params.images = {
+      L: formattedImages(body),
+    };
+  }
+
+  return params;
+};
 
 module.exports = async (body) => {
-  // let params = {
-  //   Item: formatParams(body),
-  // };
-  // const result = await createItem(params, "WatchInventory");
-  const result = "updating items with the cure";
-  console.log("body", body);
+  let params = {
+    Item: formatParams(body),
+  };
+  const result = await updateItem(params, "watchInventory");
   return result;
 };

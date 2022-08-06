@@ -6,8 +6,10 @@ module.exports = async function (params, tableName) {
     apiVersion: "2012-08-10",
     region: "us-east-1",
   });
+
   params["TableName"] = tableName;
-  const query = await ddb.updateItem(params).promise();
-  const unmarshalledQuery = AWS.DynamoDB.Converter.unmarshall(query);
+
+  const updatedItem = await ddb.putItem(params).promise();
+  const unmarshalledQuery = AWS.DynamoDB.Converter.unmarshall(updatedItem);
   return unmarshalledQuery;
 };
